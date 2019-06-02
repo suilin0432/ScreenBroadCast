@@ -3,7 +3,8 @@ import threading
 import time
 import zlib
 import PIL
-from PIL import Image
+import struct
+from PIL import Image, ImageTk
 import tkinter
 # 解压
 def decompress(b):
@@ -11,14 +12,19 @@ def decompress(b):
 
 # 字节转图像
 def bytesToImg(width, height, b, type="RGBA"):
-    img = Image.frombytes("RGBA", (width, height), b)
+    img = Image.frombytes("RGB", (width, height), b)
     return img
 
 class Receiver(threading.Thread):
     def __init__(self, window, PORT = 33333):
         threading.Thread.__init__(self)
+        self.i = 0
         self.PORT = PORT
         self.window = window
+        # self.WIDTH = 640
+        # self.HEIGHT = 480
+        self.WIDTH = 600
+        self.HEIGHT = int(1600//(2560/self.WIDTH))
 
     def run(self):
         self.begin()
@@ -39,43 +45,60 @@ class Receiver(threading.Thread):
         self.sock.sendto(b"confirm", addr)
 
         length = 0
-        da = b""
+        base = b"\x00"*1000
+        da = []
         while True:
-            data, addr = self.sock.recvfrom(1000)
+            data, addr = self.sock.recvfrom(10000)
             if len(data) > 20:
-                print(len(data), addr)
+                pass
+                # print(len(data), addr)
             else:
                 print(data, addr)
             if data == b"shutdown":
                 break
-            if length <= 0:
-                try:
-                    length = int(data.decode("utf-8"))
-                    da = b""
-                    print(length)
-                except:
-                    if len(data)<100:
-                        print("hehe: ", data)
-            else:
-                length -= len(data)
-                da += data
-                print(length)
+            if data == b"end":
+                length = 0
+                self.screen(da)
+                continue
+            try:
                 if length <= 0:
-                    print("end: ",length)
-                    self.screen(da)
-                    # threading._start_new_thread(self.screen, tuple(da))
+                    try:
+                        length = int(data.decode("utf-8"))
+                        da = [base for _ in range(length//1000+1)]
+                        da[-1]=b"\x00"*(length%1000)
+                        # print(length)
+                    except:
+                        if len(data)<100:
+                            print("hehe: ", data)
+                else:
+                    # print(len(data))
+                    dat, l, valid = struct.unpack("1000sii", data)
+                    length -= len(data)-8
+                    # da += data
+                    da[l] = dat[:valid]
+                    # print(length)
+                        # threading._start_new_thread(self.screen, tuple(da))
+            except:
+                length = 0
+                self.screen(da)
 
-            time.sleep(0.1)
+            # time.sleep(0.1)
         self.begin()
         # windowThread = threading.Thread(target=self.windowInit)
         # windowThread.start()
         # windowThread.join()
     def screen(self, data):
-        imgBytes = decompress(data)
-        img = bytesToImg(640, 480, imgBytes)
-        try:
-            self.window.img.delete(self.window.imgId)
-        except:
-            pass
-        self.window.imgId = self.window.img.create_image(640//2, 480//2, image=img)
+        print(self.i)
+        self.i += 1
+        da = b""
+        for index, i in enumerate(data):
+            # print(index, len(i))
+            da += i
+        # print("screen: ", len(da))
+        # imgBytes = decompress(data)
+        img = bytesToImg(self.WIDTH, self.HEIGHT, da)
+        img = ImageTk.PhotoImage(img)
+        # print("fill", img.height(), img.width())
+        self.window.img.config(image=img)
+        self.window.img.image = img
 
