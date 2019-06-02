@@ -54,7 +54,7 @@ class Sender(threading.Thread):
         t = 0
         lastTime = 0
         while True:
-            time.sleep(0.01)
+            # time.sleep(0.01)
             print(self.i)
             lastTime = t
             t = time.time()
@@ -75,7 +75,7 @@ class Sender(threading.Thread):
             # imageBytes = compress(imageBytes)
             length = len(imageBytes)
             self.socket.sendto(bytes(str(length), "utf-8"), self.ADDR)
-            # print(length)
+            print(length)
             partLength = 1000
 
             for i in range(length//partLength+1):
@@ -90,7 +90,7 @@ class Sender(threading.Thread):
             self.socket.sendto(b"end", self.ADDR)
             # fhead = struct.pack()
             # self.socket.sendto(imageBytes, self.ADDR)
-
+            time.sleep(1000)
 
     def waitConfirm(self):
         while True:

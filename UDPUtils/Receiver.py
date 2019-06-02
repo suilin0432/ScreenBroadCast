@@ -35,7 +35,7 @@ class Receiver(threading.Thread):
         self.sock.bind(("", self.PORT))
         print("客户端创建成功，开始接收数据")
         while True:
-            data, addr = self.sock.recvfrom(100)
+            data, addr = self.sock.recvfrom(10000)
             print(addr)
             time.sleep(0.1)
             # 如果接受到开始信号就创建窗口
@@ -73,6 +73,7 @@ class Receiver(threading.Thread):
                 else:
                     # print(len(data))
                     dat, l, valid = struct.unpack("1000sii", data)
+                    print(l)
                     length -= len(data)-8
                     # da += data
                     da[l] = dat[:valid]
@@ -94,11 +95,11 @@ class Receiver(threading.Thread):
         for index, i in enumerate(data):
             # print(index, len(i))
             da += i
-        # print("screen: ", len(da))
+        print("screen: ", len(da))
         # imgBytes = decompress(data)
         img = bytesToImg(self.WIDTH, self.HEIGHT, da)
         img = ImageTk.PhotoImage(img)
-        # print("fill", img.height(), img.width())
+        print("fill", img.height(), img.width())
         self.window.img.config(image=img)
         self.window.img.image = img
 
