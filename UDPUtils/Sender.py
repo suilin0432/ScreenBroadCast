@@ -76,15 +76,15 @@ class Sender(threading.Thread):
             length = len(imageBytes)
             self.socket.sendto(bytes(str(length), "utf-8"), self.ADDR)
             print(length)
-            partLength = 1000
+            partLength = 1464
 
             for i in range(length//partLength+1):
                 d = imageBytes[i*partLength:(i+1)*partLength]
                 # print(len(d), d)
                 l = len(d)
                 if len(d)<10000:
-                    d += b"\x00"*(1000-len(d))
-                message = struct.pack("1000sii", d, i, l)
+                    d += b"\x00"*(partLength-len(d))
+                message = struct.pack("{0}sii".format(partLength), d, i, l)
                 self.socket.sendto(message, self.ADDR)
             print("传输完毕")
             self.socket.sendto(b"end", self.ADDR)

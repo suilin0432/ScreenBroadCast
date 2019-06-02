@@ -45,8 +45,9 @@ class Receiver(threading.Thread):
         self.sock.sendto(b"confirm", addr)
 
         length = 0
-        base = b"\x00"*1000
         da = []
+        partLength = 1464
+        base = b"\x00" * partLength
         while True:
             data, addr = self.sock.recvfrom(10000)
             if len(data) > 20:
@@ -64,15 +65,15 @@ class Receiver(threading.Thread):
                 if length <= 0:
                     try:
                         length = int(data.decode("utf-8"))
-                        da = [base for _ in range(length//1000+1)]
-                        da[-1]=b"\x00"*(length%1000)
+                        da = [base for _ in range(length//partLength+1)]
+                        da[-1]=b"\x00"*(length%partLength)
                         # print(length)
                     except:
                         if len(data)<100:
                             print("hehe: ", data)
                 else:
                     # print(len(data))
-                    dat, l, valid = struct.unpack("1000sii", data)
+                    dat, l, valid = struct.unpack("{0}sii".format(partLength), data)
                     print(l)
                     length -= len(data)-8
                     # da += data
@@ -93,13 +94,16 @@ class Receiver(threading.Thread):
         self.i += 1
         da = b""
         for index, i in enumerate(data):
-            # print(index, len(i))
+            print(index, len(i))
             da += i
         print("screen: ", len(da))
         # imgBytes = decompress(data)
-        img = bytesToImg(self.WIDTH, self.HEIGHT, da)
-        img = ImageTk.PhotoImage(img)
-        print("fill", img.height(), img.width())
-        self.window.img.config(image=img)
-        self.window.img.image = img
+        try:
+            img = bytesToImg(self.WIDTH, self.HEIGHT, da)
+            img = ImageTk.PhotoImage(img)
+            print("fill", img.height(), img.width())
+            self.window.img.config(image=img)
+            self.window.img.image = img
+        except:
+            pass
 
