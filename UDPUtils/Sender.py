@@ -90,7 +90,7 @@ class Sender(threading.Thread):
             self.socket.sendto(b"end", self.ADDR)
             # fhead = struct.pack()
             # self.socket.sendto(imageBytes, self.ADDR)
-            time.sleep(1000)
+            # time.sleep(1000)
 
     def waitConfirm(self):
         while True:
