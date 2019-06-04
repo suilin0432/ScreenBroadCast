@@ -4,6 +4,7 @@ import threading
 
 class Application(Frame):
     def createWidgets(self):
+
         self.buttonFm = Frame(self)
         self.startButton = Button(self.buttonFm, text="start")
         self.startButton["fg"] = "red"
@@ -37,7 +38,6 @@ class Application(Frame):
         Frame.__init__(self, master)
         self.pack()
         self.createWidgets()
-
 
     def seInit(self):
         self.se = Sender(self)

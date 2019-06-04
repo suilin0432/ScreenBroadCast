@@ -25,9 +25,21 @@ class Receiver(threading.Thread):
         # self.HEIGHT = 480
         self.WIDTH = 600
         self.HEIGHT = int(1600//(2560/self.WIDTH))
+        self.timer = threading.Timer(1, self.windowStatus)
+        self.timer.start()
+
+    def windowStatus(self):
+        print("timer: ", self.window.status)
+        if self.window.status == "Close":
+            self.sock.close()
+        else:
+            self.timer = threading.Timer(1, self.windowStatus)
+            self.timer.start()
 
     def run(self):
         self.begin()
+
+
 
     def begin(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -35,7 +47,7 @@ class Receiver(threading.Thread):
         self.sock.bind(("", self.PORT))
         print("客户端创建成功，开始接收数据")
         while True:
-            data, addr = self.sock.recvfrom(10000)
+            data, addr = self.sock.recvfrom(50000)
             print(addr)
             time.sleep(0.1)
             # 如果接受到开始信号就创建窗口
@@ -49,7 +61,7 @@ class Receiver(threading.Thread):
         partLength = 1464
         base = b"\x00" * partLength
         while True:
-            data, addr = self.sock.recvfrom(10000)
+            data, addr = self.sock.recvfrom(50000)
             if len(data) > 20:
                 pass
                 # print(len(data), addr)
@@ -74,7 +86,7 @@ class Receiver(threading.Thread):
                 else:
                     # print(len(data))
                     dat, l, valid = struct.unpack("{0}sii".format(partLength), data)
-                    print(l)
+                    # print(l)
                     length -= len(data)-8
                     # da += data
                     da[l] = dat[:valid]
@@ -90,11 +102,11 @@ class Receiver(threading.Thread):
         # windowThread.start()
         # windowThread.join()
     def screen(self, data):
-        print(self.i)
+        # print(self.i)
         self.i += 1
         da = b""
         for index, i in enumerate(data):
-            print(index, len(i))
+            # print(index, len(i))
             da += i
         print("screen: ", len(da))
         # imgBytes = decompress(data)
