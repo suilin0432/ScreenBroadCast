@@ -27,9 +27,14 @@ class Receiver(threading.Thread):
         self.HEIGHT = int(1600//(2560/self.WIDTH))
         self.timer = threading.Timer(1, self.windowStatus)
         self.timer.start()
+        self.stop = False
+
 
     def windowStatus(self):
-        print("timer: ", self.window.status)
+        print("timer: ", self.window.status, self.stop)
+        if self.stop:
+            self.sock.close()
+            return
         if self.window.status == "Close":
             self.sock.close()
         else:
@@ -40,14 +45,17 @@ class Receiver(threading.Thread):
         self.begin()
 
 
-
     def begin(self):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.sock.bind(("", self.PORT))
         print("客户端创建成功，开始接收数据")
         while True:
-            data, addr = self.sock.recvfrom(50000)
+            try:
+                data, addr = self.sock.recvfrom(50000)
+            except:
+                continue
             print(addr)
             time.sleep(0.1)
             # 如果接受到开始信号就创建窗口
@@ -68,6 +76,16 @@ class Receiver(threading.Thread):
             else:
                 print(data, addr)
             if data == b"shutdown":
+                self.window.statusVT.set("未连接")
+                self.window.connectButton["state"] = "active"
+                self.stop = True
+                print("Shut Down!!!!")
+                self.window.re = None
+                try:
+                    self.sock.shutdown()
+                except:
+                    print("shut error")
+                self.sock.close()
                 break
             if data == b"end":
                 length = 0
@@ -119,3 +137,4 @@ class Receiver(threading.Thread):
         except:
             pass
 
+# 127.0.0.1:44445

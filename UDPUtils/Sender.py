@@ -5,6 +5,7 @@ import time
 import zlib
 import struct
 from utils.ScreenShot import get_screenshot
+import os
 
 # 截图函数
 def grabScreen():
@@ -35,6 +36,7 @@ class Sender(threading.Thread):
 
     def begin(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.socket.setsockopt(socket.SOL_SOCKET ,socket.SO_BROADCAST, 1)
         self.socket.bind(("", self.PORT))
         print("服务器创建成功，开始发送数据")
@@ -44,10 +46,26 @@ class Sender(threading.Thread):
             self.socket.sendto(b"start", self.ADDR)
             if self.state == "sending":
                 break
-            time.sleep(1)
+            time.sleep(0.02)
         print("接受到确认信号, 开始进行图片发送")
 
         self.screenSending()
+
+
+    def killport(port):
+        command = '''kill -9 $(netstat -nlp | grep :''' + str(
+            port) + ''' | awk '{print $7}' | awk -F"/" '{ print $1 }')'''
+        os.system(command)
+
+    def stop(self):
+        self.socket.sendto(b"shutdown", self.ADDR)
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except:
+            print("shutdown wrong")
+        self.socket.close()
+        self.window.se = None
+
 
     def screenSending(self):
         self.i = 0
@@ -100,16 +118,6 @@ class Sender(threading.Thread):
                 self.state = "sending"
                 self.window.stateVT.set(self.state)
                 break
-
-    def _stop(self):
-        print(111)
-        try:
-            self.socket.sendto(b"shutdown", self.ADDR)
-            self.socket.close()
-            time.sleep(0.1)
-            super()._stop()
-        except:
-            pass
 
 
 # send = Sender()
